@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { database } from './firebase';
-import { set, ref, onValue, push } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import {
     getAuth,
     signInWithPopup,
@@ -10,10 +10,9 @@ import {
 } from 'firebase/auth';
 import Calendar from './components/Calendar';
 import List from './components/List';
+import CreateBirthday from './components/CreateBirthday';
 
 function App() {
-    const [name, setName] = useState('');
-    const [date, setDate] = useState('');
     const [user, setUser] = useState('');
     const [userUid, setUserUid] = useState('');
 
@@ -41,18 +40,6 @@ function App() {
         } catch (error) {
             console.log(error, 'error');
         }
-    };
-
-    //write
-    const writeToDatabase = (e) => {
-        e.preventDefault();
-        const newBirthdayRef = push(ref(database));
-        set(newBirthdayRef, {
-            name,
-            date,
-            uuid: newBirthdayRef.key,
-            userUid
-        });
     };
 
     function calculateAge(birthdayString) {
@@ -103,8 +90,7 @@ function App() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <h1>Birthday tracker</h1>
-            {user ? (
+            {user && (
                 <>
                     <h2>Logged in as {user.displayName}</h2>
                     <img
@@ -113,29 +99,18 @@ function App() {
                         className="w-20 h-20 rounded-full"
                     />
                 </>
-            ) : (
-                <h2>not logged in</h2>
             )}
             {!user ? (
-                <button onClick={handleSignIn}>Log in</button>
+                <>
+                    <h1>Birthday tracker</h1>
+                    <button onClick={handleSignIn}>Log in</button>
+                </>
             ) : (
                 <button onClick={handleSignOut}>Log out</button>
             )}
             {user && (
                 <>
-                    <form onSubmit={writeToDatabase}>
-                        <input
-                            type="text"
-                            placeholder="name"
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                        <input
-                            type="date"
-                            onChange={(e) => setDate(e.target.value)}
-                        />
-
-                        <input type="submit" />
-                    </form>
+                    <CreateBirthday />
                     <div className="absolute top-10 right-10">
                         <List userUid={userUid} />
                         <Calendar calendarEvents={calendarEvents} />
