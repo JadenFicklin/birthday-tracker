@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import { database } from './firebase';
-import { set, ref, onValue, push } from 'firebase/database';
+import { set, ref, onValue, push, remove } from 'firebase/database';
 import { uid } from 'uid';
 import {
     getAuth,
@@ -15,6 +15,7 @@ function App() {
     const [date, setDate] = useState('');
     const [priority, setPriority] = useState('');
     const [user, setUser] = useState('');
+    const [userAge, setUserAge] = useState(0);
     const [userUid, setUserUid] = useState('');
 
     const [arrayOfBirthdays, setArrayOfBirthdays] = useState([]);
@@ -43,18 +44,44 @@ function App() {
         }
     };
 
+    //write
     const writeToDatabase = (e) => {
         e.preventDefault();
-        const uuid = uid();
         const newBirthdayRef = push(ref(database));
         set(newBirthdayRef, {
             name,
             date,
             priority,
-            uuid,
+            uuid: newBirthdayRef.key,
             userUid
         });
     };
+
+    //delete
+    const handleDelete = (input) => {
+        remove(ref(database, `/${input.uuid}`));
+    };
+
+    function calculateAge(birthdayString) {
+        const birthday = new Date(birthdayString);
+        const today = new Date();
+        const age = today.getFullYear() - birthday.getFullYear();
+        const monthDifference = today.getMonth() - birthday.getMonth();
+
+        // If the current month is before the birth month, or
+        // if the current month is the birth month and the current day is before the birth day,
+        // subtract 1 from the age.
+        if (
+            monthDifference < 0 ||
+            (monthDifference === 0 && today.getDate() < birthday.getDate())
+        ) {
+            return age - 1;
+        }
+        return age;
+    }
+
+    const birthdayString = '2001-10-10';
+    const age = calculateAge(birthdayString);
 
     useEffect(() => {
         onValue(ref(database), (snapshot) => {
@@ -119,8 +146,13 @@ function App() {
                                 key={key}
                                 style={{ background: `${item.priority}` }}
                                 className="w-32 p-3 m-3 bg-white rounded-md shadow-xl">
+                                <button onClick={() => handleDelete(item)}>
+                                    X
+                                </button>
+
                                 <p>{item.name}</p>
                                 <p>{item.date}</p>
+                                <p>Age: {calculateAge(item.date)}</p>
                             </div>
                         ))}
                 </>
