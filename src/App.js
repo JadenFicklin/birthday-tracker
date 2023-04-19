@@ -11,6 +11,7 @@ import {
 import Calendar from './components/Calendar';
 import List from './components/List';
 import CreateBirthday from './components/CreateBirthday';
+import { FcGoogle } from 'react-icons/fc';
 
 function App() {
     const [user, setUser] = useState('');
@@ -101,10 +102,22 @@ function App() {
                 </>
             )}
             {!user ? (
-                <>
-                    <h1>Birthday tracker</h1>
-                    <button onClick={handleSignIn}>Log in</button>
-                </>
+                <div className="grid w-full h-screen place-content-center">
+                    <div className="flex flex-wrap h-min">
+                        <h1 className="mb-5 text-2xl font-extrabold text-center msm:text-[80px] w-full">
+                            Birthday tracker
+                        </h1>
+                        <button
+                            onClick={handleSignIn}
+                            className="flex p-3 duration-300 scale-[90%] bg-white rounded-md hover:bg-gray-700 group border-2 w-[300px] mx-auto sm:mt-20">
+                            {' '}
+                            <FcGoogle className="w-[24px] h-[24px]" />
+                            <p className="mx-6 font-semibold text-gray-500 group-hover:text-white ">
+                                Continue with Google
+                            </p>
+                        </button>
+                    </div>
+                </div>
             ) : (
                 <button onClick={handleSignOut}>Log out</button>
             )}
