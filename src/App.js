@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { database } from './firebase';
-import { set, ref, onValue, push, remove } from 'firebase/database';
+import { set, ref, onValue, push } from 'firebase/database';
 import {
     getAuth,
     signInWithPopup,
@@ -9,6 +9,7 @@ import {
     GoogleAuthProvider
 } from 'firebase/auth';
 import Calendar from './components/Calendar';
+import List from './components/List';
 
 function App() {
     const [name, setName] = useState('');
@@ -16,7 +17,6 @@ function App() {
     const [user, setUser] = useState('');
     const [userUid, setUserUid] = useState('');
 
-    const [arrayOfBirthdays, setArrayOfBirthdays] = useState([]);
     const [calendarEvents, setCalendarEvents] = useState([]);
 
     const provider = new GoogleAuthProvider();
@@ -55,11 +55,6 @@ function App() {
         });
     };
 
-    //delete
-    const handleDelete = (input) => {
-        remove(ref(database, `/${input.uuid}`));
-    };
-
     function calculateAge(birthdayString) {
         const birthday = new Date(birthdayString);
         const today = new Date();
@@ -95,10 +90,8 @@ function App() {
                 const filteredBirthdays = holdBirthdays.filter(
                     (item) => item.userUid === userUid
                 );
-                setArrayOfBirthdays(filteredBirthdays);
                 setCalendarEvents(birthdaysToEvents(filteredBirthdays));
             } else {
-                setArrayOfBirthdays([]);
                 setCalendarEvents([]);
             }
         });
@@ -130,7 +123,6 @@ function App() {
             )}
             {user && (
                 <>
-                    {' '}
                     <form onSubmit={writeToDatabase}>
                         <input
                             type="text"
@@ -144,21 +136,10 @@ function App() {
 
                         <input type="submit" />
                     </form>
-                    <br />
-                    {arrayOfBirthdays.map((item, key) => (
-                        <div
-                            key={key}
-                            className="w-32 p-3 m-3 bg-white rounded-md shadow-xl">
-                            <button onClick={() => handleDelete(item)}>
-                                X
-                            </button>
-
-                            <p>{item.name}</p>
-                            <p>{item.date}</p>
-                            <p>Age: {calculateAge(item.date)}</p>
-                        </div>
-                    ))}
-                    <Calendar calendarEvents={calendarEvents} />
+                    <div className="absolute top-10 right-10">
+                        <List userUid={userUid} />
+                        <Calendar calendarEvents={calendarEvents} />
+                    </div>
                 </>
             )}
         </div>
