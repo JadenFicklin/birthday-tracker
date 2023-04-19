@@ -1,25 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { database } from './firebase';
 import { set, ref, onValue, push, remove } from 'firebase/database';
-import { uid } from 'uid';
 import {
     getAuth,
     signInWithPopup,
     signOut,
     GoogleAuthProvider
 } from 'firebase/auth';
-import Fullcalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import Calendar from './components/Calendar';
 
 function App() {
     const [name, setName] = useState('');
     const [date, setDate] = useState('');
-    const [priority, setPriority] = useState('');
     const [user, setUser] = useState('');
-    const [userAge, setUserAge] = useState(0);
     const [userUid, setUserUid] = useState('');
 
     const [arrayOfBirthdays, setArrayOfBirthdays] = useState([]);
@@ -56,7 +50,6 @@ function App() {
         set(newBirthdayRef, {
             name,
             date,
-            priority,
             uuid: newBirthdayRef.key,
             userUid
         });
@@ -72,10 +65,6 @@ function App() {
         const today = new Date();
         const age = today.getFullYear() - birthday.getFullYear();
         const monthDifference = today.getMonth() - birthday.getMonth();
-
-        // If the current month is before the birth month, or
-        // if the current month is the birth month and the current day is before the birth day,
-        // subtract 1 from the age.
         if (
             monthDifference < 0 ||
             (monthDifference === 0 && today.getDate() < birthday.getDate())
@@ -85,21 +74,18 @@ function App() {
         return age;
     }
 
-    function birthdaysToEvents(birthdays) {
+    const birthdaysToEvents = useCallback((birthdays) => {
         const currentYear = new Date().getFullYear();
-
         return birthdays.map((birthday) => {
             const eventDate = new Date(birthday.date);
             eventDate.setFullYear(currentYear);
-
             return {
-                title: birthday.name,
+                title: birthday.name + ` ${calculateAge(birthday.date)}`,
                 date: eventDate.toISOString().slice(0, 10),
-                color: birthday.priority,
                 id: birthday.uuid
             };
         });
-    }
+    }, []);
 
     useEffect(() => {
         const unsubscribe = onValue(ref(database), (snapshot) => {
@@ -120,7 +106,7 @@ function App() {
         return () => {
             unsubscribe();
         };
-    }, [userUid]);
+    }, [userUid, birthdaysToEvents]);
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -130,7 +116,7 @@ function App() {
                     <h2>Logged in as {user.displayName}</h2>
                     <img
                         src={`https://api.allorigins.win/raw?url=${user.photoURL}`}
-                        alt=""
+                        alt={`${user.displayName}'s profile`}
                         className="w-20 h-20 rounded-full"
                     />
                 </>
@@ -155,23 +141,13 @@ function App() {
                             type="date"
                             onChange={(e) => setDate(e.target.value)}
                         />
-                        <select
-                            value=""
-                            onChange={(e) => setPriority(e.target.value)}>
-                            <option value="" disabled>
-                                Select a priority color
-                            </option>
-                            <option>Red</option>
-                            <option>Yellow</option>
-                            <option>Green</option>
-                        </select>
+
                         <input type="submit" />
                     </form>
                     <br />
                     {arrayOfBirthdays.map((item, key) => (
                         <div
                             key={key}
-                            style={{ background: `${item.priority}` }}
                             className="w-32 p-3 m-3 bg-white rounded-md shadow-xl">
                             <button onClick={() => handleDelete(item)}>
                                 X
@@ -182,19 +158,9 @@ function App() {
                             <p>Age: {calculateAge(item.date)}</p>
                         </div>
                     ))}
+                    <Calendar calendarEvents={calendarEvents} />
                 </>
             )}
-
-            <Fullcalendar
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView={'dayGridMonth'}
-                headerToolbar={{
-                    start: 'today prev,next',
-                    center: 'title',
-                    end: 'timeGridDay,timeGridWeek,dayGridMonth'
-                }}
-                events={calendarEvents}
-            />
         </div>
     );
 }
