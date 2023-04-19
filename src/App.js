@@ -91,17 +91,7 @@ function App() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {user && (
-                <>
-                    <h2>Logged in as {user.displayName}</h2>
-                    <img
-                        src={`https://api.allorigins.win/raw?url=${user.photoURL}`}
-                        alt={`${user.displayName}'s profile`}
-                        className="w-20 h-20 rounded-full"
-                    />
-                </>
-            )}
-            {!user ? (
+            {!user && (
                 <div className="grid w-full h-screen place-content-center">
                     <div className="flex flex-wrap h-min">
                         <h1 className="mb-5 text-2xl font-extrabold text-center msm:text-[80px] w-full">
@@ -109,7 +99,7 @@ function App() {
                         </h1>
                         <button
                             onClick={handleSignIn}
-                            className="flex p-3 duration-300 scale-[90%] bg-white rounded-md hover:bg-gray-700 group border-2 w-[300px] mx-auto sm:mt-20">
+                            className="flex p-3 duration-300 scale-[90%] bg-white rounded-md hover:bg-gray-700 group border-2 w-[300px] mx-auto sm:mt-10">
                             {' '}
                             <FcGoogle className="w-[24px] h-[24px]" />
                             <p className="mx-6 font-semibold text-gray-500 group-hover:text-white ">
@@ -118,15 +108,32 @@ function App() {
                         </button>
                     </div>
                 </div>
-            ) : (
-                <button onClick={handleSignOut}>Log out</button>
             )}
             {user && (
                 <>
-                    <CreateBirthday />
-                    <div className="absolute top-10 right-10">
-                        <List userUid={userUid} />
-                        <Calendar calendarEvents={calendarEvents} />
+                    <div className="w-[1000px] py-10 mx-auto h-[160px] ">
+                        <div className="relative grid w-full h-full px-6 place-content-center">
+                            <img
+                                src={`https://api.allorigins.win/raw?url=${user.photoURL}`}
+                                alt={`${user.displayName}'s profile`}
+                                className="absolute left-0 w-20 h-20 rounded-full"
+                            />
+                            <h1 className="text-3xl font-bold">
+                                Birthday Tracker
+                            </h1>
+                            <button
+                                className="bg-gray-600 text-white px-3 rounded-[4px] absolute right-0 top-1/2 -mt-[10px] hover:bg-[#3788D8]"
+                                onClick={handleSignOut}>
+                                Log out
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex h-screen px-6 mx-auto w-min">
+                        <CreateBirthday />
+                        <div className=" ml-7">
+                            <List userUid={userUid} />
+                            <Calendar calendarEvents={calendarEvents} />
+                        </div>
                     </div>
                 </>
             )}
