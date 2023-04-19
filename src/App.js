@@ -9,6 +9,10 @@ import {
     signOut,
     GoogleAuthProvider
 } from 'firebase/auth';
+import Fullcalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 function App() {
     const [name, setName] = useState('');
@@ -19,6 +23,7 @@ function App() {
     const [userUid, setUserUid] = useState('');
 
     const [arrayOfBirthdays, setArrayOfBirthdays] = useState([]);
+    const [calendarEvents, setCalendarEvents] = useState([]);
 
     const provider = new GoogleAuthProvider();
     const auth = getAuth();
@@ -80,18 +85,42 @@ function App() {
         return age;
     }
 
-    const birthdayString = '2001-10-10';
-    const age = calculateAge(birthdayString);
+    function birthdaysToEvents(birthdays) {
+        const currentYear = new Date().getFullYear();
+
+        return birthdays.map((birthday) => {
+            const eventDate = new Date(birthday.date);
+            eventDate.setFullYear(currentYear);
+
+            return {
+                title: birthday.name,
+                date: eventDate.toISOString().slice(0, 10),
+                color: birthday.priority,
+                id: birthday.uuid
+            };
+        });
+    }
 
     useEffect(() => {
-        onValue(ref(database), (snapshot) => {
+        const unsubscribe = onValue(ref(database), (snapshot) => {
             const data = snapshot.val();
-            setArrayOfBirthdays([]);
             if (data !== null) {
-                setArrayOfBirthdays(Object.values(data));
+                const holdBirthdays = Object.values(data);
+                const filteredBirthdays = holdBirthdays.filter(
+                    (item) => item.userUid === userUid
+                );
+                setArrayOfBirthdays(filteredBirthdays);
+                setCalendarEvents(birthdaysToEvents(filteredBirthdays));
+            } else {
+                setArrayOfBirthdays([]);
+                setCalendarEvents([]);
             }
         });
-    }, []);
+
+        return () => {
+            unsubscribe();
+        };
+    }, [userUid]);
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -139,24 +168,33 @@ function App() {
                         <input type="submit" />
                     </form>
                     <br />
-                    {arrayOfBirthdays
-                        .filter((item) => item.userUid === userUid)
-                        .map((item, key) => (
-                            <div
-                                key={key}
-                                style={{ background: `${item.priority}` }}
-                                className="w-32 p-3 m-3 bg-white rounded-md shadow-xl">
-                                <button onClick={() => handleDelete(item)}>
-                                    X
-                                </button>
+                    {arrayOfBirthdays.map((item, key) => (
+                        <div
+                            key={key}
+                            style={{ background: `${item.priority}` }}
+                            className="w-32 p-3 m-3 bg-white rounded-md shadow-xl">
+                            <button onClick={() => handleDelete(item)}>
+                                X
+                            </button>
 
-                                <p>{item.name}</p>
-                                <p>{item.date}</p>
-                                <p>Age: {calculateAge(item.date)}</p>
-                            </div>
-                        ))}
+                            <p>{item.name}</p>
+                            <p>{item.date}</p>
+                            <p>Age: {calculateAge(item.date)}</p>
+                        </div>
+                    ))}
                 </>
             )}
+
+            <Fullcalendar
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                initialView={'dayGridMonth'}
+                headerToolbar={{
+                    start: 'today prev,next',
+                    center: 'title',
+                    end: 'timeGridDay,timeGridWeek,dayGridMonth'
+                }}
+                events={calendarEvents}
+            />
         </div>
     );
 }
